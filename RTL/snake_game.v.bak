@@ -1,0 +1,320 @@
+module snake_game(
+    input             clk       ,   //VGA驱动时钟
+    input             rstn      ,   //复位信号
+    input             key_up    ,
+    input             key_down  ,
+    input             key_right ,
+    input             key_left  ,
+    input             start     ,
+    input      [10:0] pixel_xpos,
+    input      [10:0] pixel_ypos,
+    output reg        die       ,
+    output reg        win       ,
+    output reg [15:0] pixel_game 
+);
+
+reg [25:0] move;
+parameter  move_num = 5000000;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            move <= 0;
+        end else if(move >= move_num)begin
+            move <= 0;
+        end else if(start)begin
+            move <= move+1;
+        end else begin
+            move <= 0;
+        end
+    end
+reg [1:0] direction;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            direction <= 2;
+        end else if(!busy)begin
+            direction <= 2;
+        end else if(key_up && direction!=1)begin
+            direction <= 0;
+        end else if(key_down && direction!=0)begin
+            direction <= 1;
+        end else if(key_right && direction!=3)begin
+            direction <= 2;
+        end else if(key_left && direction!=2)begin
+            direction <= 3;
+        end else begin
+            direction <= direction;
+        end
+    end
+reg [10:0] head_x;
+reg [10:0] head_y;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            head_x <= 0;
+            head_y <= 0;
+        end else if(start)begin
+            case(direction)
+                0:begin
+                    if(move >= move_num)begin
+                        head_x <= head_x+1;
+                        head_y <= head_y;
+                    end else begin  
+                        head_x <= head_x;
+                        head_y <= head_y;
+                    end
+                end
+                1:begin
+                    if(move >= move_num)begin
+                        head_x <= head_x-1;
+                        head_y <= head_y;
+                    end else begin  
+                        head_x <= head_x;
+                        head_y <= head_y;
+                    end
+                end
+                2:begin
+                    if(move >= move_num)begin
+                        head_x <= head_x;
+                        head_y <= head_y+1;
+                    end else begin  
+                        head_x <= head_x;
+                        head_y <= head_y;
+                    end
+                end
+                3:begin
+                    if(move >= move_num)begin
+                        head_x <= head_x;
+                        head_y <= head_y-1;
+                    end else begin  
+                        head_x <= head_x;
+                        head_y <= head_y;
+                    end
+                end
+            endcase
+        end
+    end
+reg [10:0] body_x[19:0];
+reg [10:0] body_y[19:0];
+reg [4:0]  i;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            for(i=0;i=i+1;i<20)begin
+                body_x [i] <= 0;
+                body_y [i] <= 0;
+            end
+        end else if(start)begin
+            if(move >= move_num)begin
+                body_x[i] <= head_x;
+                body_y[i] <= head_y;
+                for(i=1;i=i+1;i<20)begin
+                    body_x[i] <= body_x[i-1];
+                    body_y[i] <= body_y[i-1];
+                end
+            end else begin
+                for(i=0;i=i+1;i<20)begin
+                    body_x[i] <= body_x[i];
+                    body_y[i] <= body_y[i];
+                end
+            end
+        end else begin
+            for(i=0;i=i+1;i<20)begin
+                body_x[i] <= 0;
+                body_y[i] <= 0;
+            end
+        end
+    end
+reg [15:0] random_x;
+reg [15:0] random_y;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            random_x <= 16'h0f0f;
+        end else begin
+            random_x[0]  <= random_x[15];
+            random_x[1]  <= random_x[0] ;
+            random_x[2]  <= random_x[1] ;
+            random_x[3]  <= random_x[2] ;
+            random_x[4]  <= random_x[3] ;
+            random_x[5]  <= random_x[4] ;
+            random_x[6]  <= random_x[5] ;
+            random_x[7]  <= random_x[6] ;
+            random_x[8]  <= random_x[7] ;
+            random_x[9]  <= random_x[8] ;
+            random_x[10] <= random_x[9] ;
+            random_x[11] <= random_x[10]^random_x[15];
+            random_x[12] <= random_x[11]^random_x[15];
+            random_x[13] <= random_x[12]^random_x[15];
+            random_x[14] <= random_x[13]^random_x[15];
+            random_x[15] <= random_x[14];
+        end
+    end
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            random_y <= 16'h5555;
+        end else begin
+            random_y[0]  <= random_y[15];
+            random_y[1]  <= random_y[0] ;
+            random_y[2]  <= random_y[1] ;
+            random_y[3]  <= random_y[2] ;
+            random_y[4]  <= random_y[3] ;
+            random_y[5]  <= random_y[4] ;
+            random_y[6]  <= random_y[5] ;
+            random_y[7]  <= random_y[6] ;
+            random_y[8]  <= random_y[7] ;
+            random_y[9]  <= random_y[8] ;
+            random_y[10] <= random_y[9] ;
+            random_y[11] <= random_y[10]^random_y[15];
+            random_y[12] <= random_y[11]^random_y[15];
+            random_y[13] <= random_y[12]^random_y[15];
+            random_y[14] <= random_y[13]^random_y[15];
+            random_y[15] <= random_y[14];
+        end
+    end
+reg eated;
+reg [15:0] color_apple;
+reg [10:0] apple_x;
+reg [10:0] apple_y;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            apple_x     <= 0;
+            apple_y     <= 0;
+            color_apple <= 0;
+        end else if(eated || (!start && key_right))begin
+            apple_x     <= random_x%80;
+            apple_y     <= random_y%60;
+            if(random_x == 0)begin
+                color_apple <= 16'hFFFF;
+            end else begin
+                color_apple <= random_x;
+            end
+        end else begin
+            apple_x     <= apple_x;
+            apple_y     <= apple_y;
+            color_apple <= color_apple;
+        end
+    end
+reg flag;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            flag <= 0;
+        end else if(move >= move_num)begin
+            flag <= 1;
+        end else begin
+            flag <= 0;
+        end
+    end
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            eated <= 0;
+        end else if(apple_x==head_x && apple_y==head_y && flag)begin
+            eated <= 1;
+        end else begin
+            eated <= 0;
+        end
+    end
+reg [15:0] color_body[19:0];
+reg [4:0]  j;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            for(j=0;j=j+1;j<20)begin
+                color_body[j] <= 16'h0780;
+            end
+        end else if(start)begin
+            if(eated)begin
+                color_body[0] <= color_apple;
+                for(j=1;j=j+1;j<20)begin
+                    color_body[j] <= color_body[j-1];
+                end
+            end else begin
+                for(j=0;j=j+1;j<20)begin
+                    color_body[j] <= color_body[j];
+                end
+            end
+        end else begin
+            for(j=0;j=j+1;j<20)begin
+                color_body[j] <= 16'h0780;
+            end
+        end
+    end
+reg [10:0] length;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            length <= 0;
+        end else if(start)begin
+            if(eated)begin
+                length <= length+1;
+            end else begin
+                length <= length;
+            end
+        end else begin
+            length <= 0;
+        end
+    end
+wire [10:0] xpos;
+wire [10:0] ypos;
+assign xpos = pixel_xpos[10:3];
+assign ypos = pixel_ypos[10:3];
+parameter color_head = 16'hF800;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            pixel_game <= 0;
+        end else if(((xpos==0 || xpos==79) && (ypos<=50)) || ypos==0 || ypos==50)begin
+            pixel_game <= wall;
+        end else if(xpos==apple_x && ypos==apple_y)begin
+            pixel_game <= appple;
+        end else if(xpos==head_x && ypos==head_y)begin
+            pixel_game <= head;
+        end else if(xpos==body_x[0] && ypos==body_y[0] && length>=0)begin
+            pixel_game <= color_head;
+        end else if(xpos==body_x[1] && ypos==body_y[1] && length>=0)begin
+            pixel_game <= color_body[0];
+        end else if(xpos==body_x[2] && ypos==body_y[2] && length>=0)begin
+            pixel_game <= color_body[1];
+        end else if(xpos==body_x[3] && ypos==body_y[3] && length>=0)begin
+            pixel_game <= color_body[2];
+        end else if(xpos==body_x[4] && ypos==body_y[4] && length>=0)begin
+            pixel_game <= color_body[3];
+        end else if(xpos==body_x[5] && ypos==body_y[5] && length>=1)begin
+            pixel_game <= color_body[4];
+        end else if(xpos==body_x[6] && ypos==body_y[6] && length>=2)begin
+            pixel_game <= color_body[5];
+        end else if(xpos==body_x[7] && ypos==body_y[7] && length>=3)begin
+            pixel_game <= color_body[6];
+        end else if(xpos==body_x[8] && ypos==body_y[8] && length>=4)begin
+            pixel_game <= color_body[7];
+        end else if(xpos==body_x[9] && ypos==body_y[9] && length>=5)begin
+            pixel_game <= color_body[8];
+        end else if(xpos==body_x[10] && ypos==body_y[10] && length>=6)begin
+            pixel_game <= color_body[9];
+        end else if(xpos==body_x[11] && ypos==body_y[11] && length>=7)begin
+            pixel_game <= color_body[10];
+        end else if(xpos==body_x[12] && ypos==body_y[12] && length>=8)begin
+            pixel_game <= color_body[11];
+        end else if(xpos==body_x[13] && ypos==body_y[13] && length>=9)begin
+            pixel_game <= color_body[12];
+        end else if(xpos==body_x[14] && ypos==body_y[14] && length>=10)begin
+            pixel_game <= color_body[13];
+        end else if(xpos==body_x[15] && ypos==body_y[15] && length>=11)begin
+            pixel_game <= color_body[14];
+        end else if(xpos==body_x[16] && ypos==body_y[16] && length>=12)begin
+            pixel_game <= color_body[15];
+        end else if(xpos==body_x[17] && ypos==body_y[17] && length>=13)begin
+            pixel_game <= color_body[16];
+        end else if(xpos==body_x[18] && ypos==body_y[18] && length>=14)begin
+            pixel_game <= color_body[17];
+        end else if(xpos==body_x[19] && ypos==body_y[19] && length>=15)begin
+            pixel_game <= color_body[18];
+        end else begin
+            pixel_game <= 0;
+        end
+    end
+endmodule

@@ -1,0 +1,73 @@
+module control(
+    input             clk       ,   //VGA驱动时钟
+    input             rstn      ,   //复位信号
+    input             key_up    ,
+    input             key_down  ,
+    input             key_right ,
+    input             key_left  ,
+    input      [10:0] pixel_xpos,
+    input      [10:0] pixel_ypos,
+    output reg [15:0] pixel_data 
+);
+
+reg start;
+reg die;
+reg win;
+reg die_state;
+reg win_state;
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            start <= 0;
+        end else if(key_right && !die_state && win_state)begin
+            start <= 1;
+        end else if(die || win)begin
+            start <= 0;
+        end else begin
+            start <= start;
+        end
+    end
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            die_state <= 0;
+        end else if(die)begin
+            die_state <= 1;
+        end else if(key_right)begin
+            die_state <= 0;
+        end else begin
+            die_state <= die_state;
+        end
+    end
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            win_state <= 0;
+        end else if(win)begin
+            win_state <= 1;
+        end else if(key_right)begin
+            win_state <= 0;
+        end else begin
+            win_state <= win_state;
+        end
+    end
+wire [15:0] pixel_start;
+snake_start snake_start(
+    .clk          (clk        ),  //input             clk        ,   //VGA驱动时钟
+    .rstn         (rstn       ),  //input             rstn       ,   //复位信号
+    .pixel_xpos   (pixel_xpos ),  //input      [10:0] pixel_xpos ,
+    .pixel_ypos   (pixel_ypos ),  //input      [10:0] pixel_ypos ,
+    .pixel_start  (pixel_start)   //output reg [15:0] pixel_start 
+);
+always@(posedge clk or negedge rstn)
+    begin
+        if(!rstn)begin
+            pixel_data <= 0;
+        end else if(!start)begin
+            pixel_data <= pixel_start;
+        end else begin
+            pixel_data <= 0;
+        end
+    end
+
+endmodule
